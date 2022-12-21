@@ -1,3 +1,6 @@
+using DogAPIproject;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,12 +17,45 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
- 
+var dogs = new List<Dog>()
+{
+    new Dog("Shih Tzu","Brasil"),
+    new Dog("Bulldog Inglês", "Argentina"),
+    new Dog("Yorkshire Terrie", "Chile"),
+    new Dog("Boxer", "Reino Unido")
+};
+
 app.MapGet("/dogs", () =>
 {
-    return Results.Ok();
+    return Results.Ok(dogs);
 })
 .WithName("dogs");
+
+app.MapGet("/dog", ([FromQuery] string name) =>
+{
+    var dog = dogs.FirstOrDefault(dog => dog.Breed.ToLower() == name.ToLower());
+
+    if (dog == default)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(dog);
+});
+
+app.MapPost("/dog", ([FromBody] Dog dog) =>
+{
+    dogs.Add(dog);
+
+    return Results.Created($"dog/{dog.Breed}", dog);
+});
+
+app.MapDelete("/dogs", ([FromQuery] string name) =>
+{
+    var dog = dogs.Find(dog => dog.Breed.ToLower() == name.ToLower());
+    dogs.Remove(dog);
+    return Results.Ok();
+});
 
 app.Run();
 
